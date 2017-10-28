@@ -461,24 +461,37 @@ The following parameters can be specified to set up the controller:
     If `intelRdt` is set, the runtime MUST write the container process ID to the `<container-id>/tasks` file in a mounted `resctrl` pseudo-filesystem, using the container ID from [`start`](runtime.md#start) and creating the `<container-id>` directory if necessary.
     If no mounted `resctrl` pseudo-filesystem is available in the [runtime mount namespace](glossary.md#runtime-namespace), the runtime MUST [generate an error](runtime.md#errors).
 
-    If `intelRdt` is not set, the runtime MUST NOT manipulate any `resctrl` pseudo-filesystems.
+If `intelRdt` is not set, the runtime MUST NOT manipulate any `resctrl` pseudo-filesystems.
 
 The following parameters can be specified for the container:
 
-* **`l3CacheSchema`** *(string, OPTIONAL)* - specifies the schema for L3 cache id and capacity bitmask (CBM).
-    If `l3CacheSchema` is set, runtimes MUST write the value to the `schemata` file in the `<container-id>` directory discussed in `intelRdt`.
+* **`l3Cache`** *(array of objects, OPTIONAL)* - an array of L3 cache id and capacity bitmask (CBM).
+    Each entry has the following structure:
+    * **`id`** *(uint32, REQUIRED)* - L3 cache id
+    * **`value`** *(string, REQUIRED)* - capacity bitmask (CBM) 
+* **`memBandwidth`** *(array of objects, OPTIONAL)* - an array of memory bandwidth percentage per L3 cache id.
+    Each entry has the following structure:
+    * **`id`** *(uint32, REQUIRED)* - L3 cache id
+    * **`value`** *(uint32, REQUIRED)* - memory bandwidth percentage
 
-    If `l3CacheSchema` is not set, runtimes MUST NOT write to `schemata` files in any `resctrl` pseudo-filesystems.
+If both `l3Cache` and `memBandwidth` are set, runtimes MUST write the value to the `schemata` file in the `<container-id>` directory discussed in `intelRdt`.
+If either `l3Cache` or `memBandwidth` is set, runtimes MUST write the value to the `schemata` file in the `<container-id>` directory discussed in `intelRdt`.
+
+If neither `l3Cache` nor `memBandwidth` is set, runtimes MUST NOT write to `schemata` files in any `resctrl` pseudo-filesystems.
 
 ### Example
 
-Consider a two-socket machine with two L3 caches where the default CBM is 0xfffff and the max CBM length is 20 bits.
-Tasks inside the container only have access to the "upper" 80% of L3 cache id 0 and the "lower" 50% L3 cache id 1:
+Consider a two-socket machine with two L3 caches where the default CBM is 0x7ff and the max CBM length is 11 bits,
+and minimum memory bandwidth of 10% with a memory bandwidth granularity of 10%.
+
+Tasks inside the container only have access to the "upper" 7/11 of L3 cache on socket 0 and the "lower" 5/11 L3 cache on socket 1,
+and may use a maximum memory bandwidth of 20% on socket 0 and 70% on socket 1.
 
 ```json
 "linux": {
     "intelRdt": {
-        "l3CacheSchema": "L3:0=ffff0;1=3ff"
+        "l3Cache": [{"id": 0, "value": "7f0"}, {"id": 1, "value": "1f"}],
+        "memBandwidth": [{"id": 0, "value": 20}, {"id": 1, "value": 70}]
     }
 }
 ```

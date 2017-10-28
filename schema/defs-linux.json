@@ -265,6 +265,36 @@
             "required": [
                 "type"
             ]
+        },
+        "IntelRdtL3Cache": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "$ref": "defs.json#/definitions/uint32"
+                },
+                "value": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "value"
+            ]
+        },
+        "IntelRdtMemBandwidth": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "$ref": "defs.json#/definitions/uint32"
+                },
+                "value": {
+                    "$ref": "defs.json#/definitions/uint32"
+                }
+            },
+            "required": [
+                "id",
+                "value"
+            ]
         }
     }
 }
